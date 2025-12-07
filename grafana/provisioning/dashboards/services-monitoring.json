@@ -26,7 +26,7 @@
             "mode": "palette-classic"
           },
           "custom": {
-            "axisLabel": "",
+            "axisLabel": "Requests/sec",
             "axisPlacement": "auto",
             "barAlignment": 0,
             "drawStyle": "line",
@@ -60,10 +60,6 @@
               {
                 "color": "green",
                 "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
               }
             ]
           }
@@ -89,12 +85,12 @@
       },
       "targets": [
         {
-          "expr": "increase(apisix_http_requests_total[1m]) / 60",
+          "expr": "sum(rate(flask_http_requests_total[1m])) by (service)",
           "refId": "A",
-          "legendFormat": "rps"
+          "legendFormat": "{{service}}"
         }
       ],
-      "title": "APISIX HTTP Requests Per Second",
+      "title": "Service Requests Per Second",
       "type": "timeseries"
     },
     {
@@ -105,7 +101,7 @@
             "mode": "palette-classic"
           },
           "custom": {
-            "axisLabel": "Latency (ms)",
+            "axisLabel": "Latency (sec)",
             "axisPlacement": "auto",
             "barAlignment": 0,
             "drawStyle": "line",
@@ -142,7 +138,7 @@
               }
             ]
           },
-          "unit": "ms"
+          "unit": "s"
         },
         "overrides": []
       },
@@ -165,12 +161,17 @@
       },
       "targets": [
         {
-          "expr": "apisix_nginx_http_current_connections{state=\"active\"}",
+          "expr": "histogram_quantile(0.95, sum(rate(flask_request_latency_seconds_bucket[5m])) by (le, service))",
           "refId": "A",
-          "legendFormat": "active_connections"
+          "legendFormat": "p95 - {{service}}"
+        },
+        {
+          "expr": "histogram_quantile(0.99, sum(rate(flask_request_latency_seconds_bucket[5m])) by (le, service))",
+          "refId": "B",
+          "legendFormat": "p99 - {{service}}"
         }
       ],
-      "title": "APISIX Active HTTP Connections (fallback)",
+      "title": "Service Request Latency (p95, p99)",
       "type": "timeseries"
     },
     {
@@ -240,17 +241,22 @@
       },
       "targets": [
         {
-          "expr": "increase(apisix_http_requests_total[1m])",
+          "expr": "sum(increase(flask_http_requests_total{http_status=~\"2..\"}[5m])) by (service)",
           "refId": "A",
-          "legendFormat": "requests_per_min"
+          "legendFormat": "2xx - {{service}}"
         },
         {
-          "expr": "rate(apisix_nginx_metric_errors_total[1m])",
+          "expr": "sum(increase(flask_http_requests_total{http_status=~\"4..\"}[5m])) by (service)",
           "refId": "B",
-          "legendFormat": "errors_per_sec"
+          "legendFormat": "4xx - {{service}}"
+        },
+        {
+          "expr": "sum(increase(flask_http_requests_total{http_status=~\"5..\"}[5m])) by (service)",
+          "refId": "C",
+          "legendFormat": "5xx - {{service}}"
         }
       ],
-      "title": "Requests and Errors (fallback)",
+      "title": "HTTP Status Codes by Service",
       "type": "timeseries"
     },
     {
@@ -299,19 +305,19 @@
       },
       "targets": [
         {
-          "expr": "sum(apisix_node_info) by (hostname)",
+          "expr": "sum(increase(flask_http_requests_total[5m])) by (service)",
           "refId": "A",
-          "legendFormat": "{{hostname}}"
+          "legendFormat": "{{service}}"
         }
       ],
-      "title": "APISIX Node Count (fallback)",
+      "title": "Total Requests by Service",
       "type": "piechart"
     }
   ],
   "refresh": "10s",
   "schemaVersion": 32,
   "style": "dark",
-  "tags": ["apisix", "gateway"],
+  "tags": ["services", "flask", "monitoring"],
   "templating": {
     "list": []
   },
@@ -321,7 +327,7 @@
   },
   "timepicker": {},
   "timezone": "",
-  "title": "APISIX Gateway Monitoring",
-  "uid": "apisix-dashboard",
+  "title": "Flask Services Monitoring",
+  "uid": "services-monitoring",
   "version": 0
 }

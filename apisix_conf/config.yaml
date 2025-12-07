@@ -77,3 +77,9 @@ plugin_attr:
     export_addr:
       ip: "0.0.0.0"
       port: 9091
+
+# Rate limiting configuration (default values for limit-count plugin)
+# These can be overridden per-route via Admin API
+limit_count:
+  rate: 100       # requests per time window
+  time_window: 60 # seconds

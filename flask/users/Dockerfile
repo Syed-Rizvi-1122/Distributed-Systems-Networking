@@ -2,8 +2,8 @@ FROM python:3.10
 
 WORKDIR /app
 
-# Copy requirements from root of repo
-COPY requirements.txt /app/
+# Copy service-specific requirements
+COPY flask/users/requirements.txt /app/requirements.txt
 
 # Install dependencies
 RUN pip install -r requirements.txt
